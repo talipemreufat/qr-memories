@@ -4,20 +4,24 @@ import { uploadToCloudinary } from '../lib/cloudinary';
 export default function UploadPage() {
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [submitted, setSubmitted] = useState(false);
-  const [uploadUrl, setUploadUrl] = useState<string | null>(null);
+  const [uploadUrls, setUploadUrls] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) return;
+    if (!files.length) return;
 
     try {
       setLoading(true);
-      const uploadedUrl = await uploadToCloudinary(file);
-      console.log('Yüklendi:', uploadedUrl);
-      setUploadUrl(uploadedUrl);
+      const uploadedUrls: string[] = [];
+      for (const file of files) {
+        const uploadedUrl = await uploadToCloudinary(file);
+        uploadedUrls.push(uploadedUrl);
+      }
+      console.log('Tüm dosyalar yüklendi:', uploadedUrls);
+      setUploadUrls(uploadedUrls);
       setSubmitted(true);
     } catch (err) {
       console.error('Yükleme hatası:', err);
@@ -32,24 +36,26 @@ export default function UploadPage() {
       <div className="upload-container">
         {submitted ? (
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-green-600 mb-4">🎉 Anınız kaydedildi!</h2>
-            {uploadUrl && (
-              <div className="rounded-xl overflow-hidden border mt-4">
-                {uploadUrl.match(/video/) ? (
-                  <video src={uploadUrl} controls className="w-full max-h-[300px]" />
+            <h2 className="text-2xl font-bold text-green-600 mb-4">🎉 Anılarınız kaydedildi!</h2>
+            
+            {uploadUrls.map((url, index) => (
+              <div key={index} className="rounded-xl overflow-hidden border mt-4">
+                {url.match(/video/) ? (
+                  <video src={url} controls className="w-full max-h-[300px]" />
                 ) : (
-                  <img src={uploadUrl} alt="Uploaded" className="w-full" />
+                  <img src={url} alt={`Uploaded ${index}`} className="w-full" />
                 )}
               </div>
-            )}
+            ))}
+
             <p className="mt-4 text-gray-600">Teşekkür ederiz, {name}!</p>
 
-            {/* Ana sayfaya dön butonu */}
+            {/* Yeniden yükleme butonu */}
             <button
               className="mt-6 px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition"
               onClick={() => window.location.href = '/upload'}
             >
-              Yeni Bir Anı Yükle
+              Yeni Anı Yükle
             </button>
           </div>
         ) : (
@@ -71,11 +77,12 @@ export default function UploadPage() {
                 onChange={(e) => setMessage(e.target.value)}
               />
 
-              <label>Fotoğraf veya Video *</label>
+              <label>Fotoğraf veya Video (Birden Fazla Seçebilirsiniz) *</label>
               <input
                 type="file"
                 accept="image/*,video/*"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                multiple
+                onChange={(e) => setFiles(Array.from(e.target.files || []))}
                 required
               />
 
