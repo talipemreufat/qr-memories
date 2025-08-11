@@ -1,0 +1,66 @@
+/* ==== Özel Global Stillendirme ==== */
+
+body {
+  background: linear-gradient(to top right, #f3e8ff, #e0f2fe, #ffffff);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+}
+
+.upload-container {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border-radius: 24px;
+  padding: 40px;
+  max-width: 600px;
+  width: 100%;
+  margin: auto;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.upload-container h1 {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.upload-container label {
+  font-weight: 500;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.upload-container input[type="text"],
+.upload-container textarea,
+.upload-container input[type="file"] {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  background: #fff;
+  transition: all 0.2s ease;
+}
+
+.upload-container input[type="text"]:focus,
+.upload-container textarea:focus {
+  border-color: #9333ea;
+  outline: none;
+}
+
+.upload-container button {
+  width: 100%;
+  background: #9333ea;
+  color: white;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.upload-container button:hover {
+  background: #7e22ce;
+}
