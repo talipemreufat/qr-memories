@@ -13,15 +13,6 @@ export default function UploadPage() {
     e.preventDefault();
     if (!files.length) return;
 
-    // Boyut limiti (ör. 20 MB)
-    const MAX_MB = 20;
-    for (const f of files) {
-      if (f.size > MAX_MB * 1024 * 1024) {
-        alert(`'${f.name}' ${MAX_MB}MB sınırını aşıyor.`);
-        return;
-      }
-    }
-
     try {
       setLoading(true);
       const uploaded: CloudinaryUploadResult[] = [];
@@ -44,23 +35,28 @@ export default function UploadPage() {
       <div className="upload-container">
         {submitted ? (
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-green-600 mb-4">🎉 Anılarınız kaydedildi!</h2>
+            <h2 className="text-2xl font-bold text-green-600 mb-2">🎉 Anılarınız kaydedildi!</h2>
+
+            <div className="mx-auto mb-4 inline-block text-left bg-white/80 border rounded-xl p-4">
+              <p className="text-sm text-gray-600"><span className="font-semibold">Ad:</span> {name}</p>
+              {message && <p className="text-sm text-gray-600 mt-1"><span className="font-semibold">Mesaj:</span> {message}</p>}
+            </div>
 
             {results.map((r, idx) => (
-              <div key={idx} className="rounded-xl overflow-hidden border mt-6">
+              <div key={idx} className="rounded-xl overflow-hidden border mt-4">
                 {r.resource_type === 'video' ? (
                   <video src={r.secure_url} controls className="w-full max-h-[300px]" />
                 ) : (
                   <img src={r.secure_url} alt={`Uploaded ${idx}`} className="w-full" />
                 )}
-
-                {/* Alt bilgi olarak kullanıcı adı & mesaj */}
-                <div className="px-3 py-2 bg-white/80 text-sm text-gray-800 border-t">
-                  <span className="font-semibold">Ad:</span> {decodeURIComponent(r.context?.custom?.name || name)}
-                  {message && (
-                    <> — <span className="font-semibold">Mesaj:</span> {decodeURIComponent(r.context?.custom?.message || message)}</>
-                  )}
-                </div>
+                {(r.context?.custom?.name || r.context?.custom?.message) && (
+                  <p className="px-3 py-2 text-sm text-gray-600">
+                    <span className="font-semibold">Ad:</span> {decodeURIComponent(r.context?.custom?.name || '')}
+                    {r.context?.custom?.message && (
+                      <> — <span className="font-semibold">Mesaj:</span> {decodeURIComponent(r.context.custom.message)}</>
+                    )}
+                  </p>
+                )}
               </div>
             ))}
 
@@ -73,22 +69,13 @@ export default function UploadPage() {
           </div>
         ) : (
           <>
-            <h1 className="text-xl font-bold mb-4">✨ Anılarını Paylaş</h1>
+            <h1>✨ Anılarını Paylaş</h1>
             <form onSubmit={handleSubmit}>
               <label>Adınız *</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
 
               <label>Mesaj (isteğe bağlı)</label>
-              <textarea
-                rows={4}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-              />
+              <textarea rows={4} value={message} onChange={(e) => setMessage(e.target.value)} />
 
               <label>Fotoğraf veya Video (Birden Fazla Seçebilirsiniz) *</label>
               <input
@@ -99,7 +86,7 @@ export default function UploadPage() {
                 required
               />
               {files.length > 0 && (
-                <p className="mt-2 text-sm text-gray-500">{files.length} dosya seçildi</p>
+                <p className="mt-2 text-sm text-gray-500">Seçilen dosya: {files.length}</p>
               )}
 
               <button type="submit" disabled={loading}>
