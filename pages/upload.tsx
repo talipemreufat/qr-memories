@@ -1,3 +1,4 @@
+// pages/upload.tsx
 import { useState } from 'react';
 import { uploadToCloudinarySigned, type CloudinaryUploadResult } from '../lib/cloudinary';
 
@@ -24,12 +25,10 @@ export default function UploadPage() {
     try {
       setLoading(true);
       const uploaded: CloudinaryUploadResult[] = [];
-
       for (const f of files) {
         const res = await uploadToCloudinarySigned(f, name, message);
         uploaded.push(res);
       }
-
       setResults(uploaded);
       setSubmitted(true);
     } catch (err) {
@@ -47,15 +46,13 @@ export default function UploadPage() {
           <div className="text-center">
             <h2 className="text-2xl font-bold text-green-600 mb-2">🎉 Anılarınız kaydedildi!</h2>
 
-            {/* Ad & Mesaj */}
+            {/* Ad & Mesaj (formdan) */}
             <div className="mx-auto mb-4 inline-block text-left bg-white/80 border rounded-xl p-4">
               <p className="text-sm text-gray-600"><span className="font-semibold">Ad:</span> {name}</p>
-              {message && (
-                <p className="text-sm text-gray-600 mt-1"><span className="font-semibold">Mesaj:</span> {message}</p>
-              )}
+              {message && <p className="text-sm text-gray-600 mt-1"><span className="font-semibold">Mesaj:</span> {message}</p>}
             </div>
 
-            {/* Yüklenen tüm dosyalar */}
+            {/* Yüklenen dosyalar */}
             {results.map((r, idx) => (
               <div key={idx} className="rounded-xl overflow-hidden border mt-4">
                 {r.resource_type === 'video' ? (
@@ -64,13 +61,13 @@ export default function UploadPage() {
                   <img src={r.secure_url} alt={`Uploaded ${idx}`} className="w-full" />
                 )}
 
-                {/* Cloudinary metadata */}
+                {/* Cloudinary metadata (decode edilmiş halde geliyor) */}
                 <div className="px-3 py-2 text-sm text-gray-600">
                   {r.context?.custom?.name && (
-                    <p><span className="font-semibold">Ad:</span> {decodeURIComponent(r.context.custom.name)}</p>
+                    <p><span className="font-semibold">Ad:</span> {r.context.custom.name}</p>
                   )}
                   {r.context?.custom?.message && (
-                    <p><span className="font-semibold">Mesaj:</span> {decodeURIComponent(r.context.custom.message)}</p>
+                    <p><span className="font-semibold">Mesaj:</span> {r.context.custom.message}</p>
                   )}
                   {r.public_id && (
                     <p><span className="font-semibold">Klasör:</span> {r.public_id.split('/').slice(0, -1).join('/')}</p>
