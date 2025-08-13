@@ -18,20 +18,26 @@ export async function uploadToCloudinarySigned(
     throw new Error('Cloudinary config missing (check NEXT_PUBLIC_* envs).');
   }
 
-  // İsim/mesaj context
+  // Context bilgisi
   const context = `custom[name]=${encodeURIComponent(name)}|custom[message]=${encodeURIComponent(message)}`;
-  const folder = 'memories';
+  const folder = `memories/${name}`;
+  const tags = name;
 
-  // Signature isteği
+  // Server’dan imza al
   const signRes = await fetch('/api/cloudinary-sign', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ upload_preset: uploadPreset, folder, context }),
+    body: JSON.stringify({
+      upload_preset: uploadPreset,
+      folder,
+      context,
+      tags
+    }),
   });
   if (!signRes.ok) throw new Error('Signature request failed');
   const { signature, timestamp } = await signRes.json();
 
-  // Upload
+  // Cloudinary’ye upload et
   const form = new FormData();
   form.append('file', file);
   form.append('api_key', apiKey);
@@ -40,11 +46,10 @@ export async function uploadToCloudinarySigned(
   form.append('signature', signature);
   form.append('context', context);
   form.append('folder', folder);
+  form.append('tags', tags);
 
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, {
-    method: 'POST',
-    body: form,
-  });
+  const url = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
+  const res = await fetch(url, { method: 'POST', body: form });
   const data = await res.json();
   if (!res.ok) throw new Error(data?.error?.message || 'Upload failed');
 
