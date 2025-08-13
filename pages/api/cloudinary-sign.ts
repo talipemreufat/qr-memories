@@ -7,24 +7,27 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const { upload_preset, folder, context, tags } = req.body;
-
   const apiSecret = process.env.CLOUDINARY_API_SECRET!;
+
   if (!apiSecret) {
     return res.status(500).json({ error: 'Cloudinary API secret missing' });
   }
 
   const timestamp = Math.floor(Date.now() / 1000);
 
-  // Parametreleri alfabetik sırayla stringe ekle
+  // Context'i stringe çevir (JSON formatında)
+  const contextStr =
+    typeof context === 'string' ? context : JSON.stringify(context);
+
+  // İmzalanacak parametreler (alfabetik sırada)
   const paramsToSign = [
-    `context=${context}`,
+    `context=${contextStr}`,
     `folder=${folder}`,
     `tags=${tags}`,
     `timestamp=${timestamp}`,
     `upload_preset=${upload_preset}`
   ].join('&');
 
-  // İmza oluştur
   const signature = crypto
     .createHash('sha1')
     .update(paramsToSign + apiSecret)

@@ -1,4 +1,3 @@
-// lib/cloudinary.ts
 export type CloudinaryUploadResult = {
   secure_url: string;
   public_id: string;
@@ -20,38 +19,31 @@ export async function uploadToCloudinarySigned(
     throw new Error('Cloudinary config missing (check NEXT_PUBLIC_* envs).');
   }
 
-  // ✅ JSON context (Türkçe karakterler bozulmaz)
+  // Context artık JSON formatında (Türkçe karakter desteği için)
   const contextObj = { custom: { name, message } };
 
-  // Kullanıcıya özel, güvenli klasör & tag
-  const safe = name.trim()
-    ? encodeURIComponent(name.trim()).replace(/%20/g, '_')
-    : 'guest';
+  // Kullanıcıya özel klasör / tag
+  const safe = name.trim().length ? name.trim().replace(/\s+/g, '_') : 'guest';
   const folder = `memories/${safe}`;
   const tags = safe;
 
-  // 1) İmza isteği (aynı değerleri gönderiyoruz!)
+  // 1) İmza isteği (server: /api/cloudinary-sign aynı parametreleri imzalamalı)
   const signRes = await fetch('/api/cloudinary-sign', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      upload_preset: uploadPreset,
-      folder,
-      context: contextObj,   // ← JSON gönder
-      tags
-    }),
+    body: JSON.stringify({ upload_preset: uploadPreset, folder, context: contextObj, tags }),
   });
   if (!signRes.ok) throw new Error('Signature request failed');
   const { signature, timestamp } = await signRes.json();
 
-  // 2) Cloudinary'ye upload (context'i JSON.stringify ile ekliyoruz)
+  // 2) Upload
   const form = new FormData();
   form.append('file', file);
   form.append('api_key', apiKey);
   form.append('timestamp', String(timestamp));
   form.append('upload_preset', uploadPreset);
   form.append('signature', signature);
-  form.append('context', JSON.stringify(contextObj)); // ← JSON string
+  form.append('context', JSON.stringify(contextObj));
   form.append('folder', folder);
   form.append('tags', tags);
 
@@ -61,6 +53,5 @@ export async function uploadToCloudinarySigned(
 
   if (!res.ok) throw new Error(data?.error?.message || 'Upload failed');
 
-  // UI'da direkt düzgün görünsün diye herhangi bir decode gerekmiyor.
   return data as CloudinaryUploadResult;
 }
