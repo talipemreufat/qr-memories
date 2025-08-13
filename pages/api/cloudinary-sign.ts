@@ -1,3 +1,4 @@
+// pages/api/cloudinary-sign.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import crypto from 'crypto';
 
@@ -6,32 +7,38 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { upload_preset, folder, context, tags } = req.body;
-  const apiSecret = process.env.CLOUDINARY_API_SECRET!;
+  const { upload_preset, folder, context, tags } = req.body as {
+    upload_preset?: string;
+    folder?: string;
+    context?: string;  // ham UTF-8 "name=...|message=..."
+    tags?: string;
+  };
 
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
   if (!apiSecret) {
     return res.status(500).json({ error: 'Cloudinary API secret missing' });
   }
 
   const timestamp = Math.floor(Date.now() / 1000);
 
-  // Context'i stringe çevir (JSON formatında)
-  const contextStr =
-    typeof context === 'string' ? context : JSON.stringify(context);
+  // SADECE dolu olan parametreleri ekle, alfabetik sırada imzala
+  const params: Record<string, string> = {
+    ...(context ? { context } : {}),
+    ...(folder ? { folder } : {}),
+    ...(tags ? { tags } : {}),
+    timestamp: String(timestamp),
+    ...(upload_preset ? { upload_preset } : {}),
+  };
 
-  // İmzalanacak parametreler (alfabetik sırada)
-  const paramsToSign = [
-    `context=${contextStr}`,
-    `folder=${folder}`,
-    `tags=${tags}`,
-    `timestamp=${timestamp}`,
-    `upload_preset=${upload_preset}`
-  ].join('&');
+  const toSign = Object.keys(params)
+    .sort() // alfabetik
+    .map((k) => `${k}=${params[k]}`)
+    .join('&');
 
   const signature = crypto
     .createHash('sha1')
-    .update(paramsToSign + apiSecret)
+    .update(toSign + apiSecret)
     .digest('hex');
 
-  res.status(200).json({ signature, timestamp });
+  return res.status(200).json({ signature, timestamp });
 }
