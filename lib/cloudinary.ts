@@ -20,31 +20,38 @@ export async function uploadToCloudinarySigned(
     throw new Error('Cloudinary config missing (check NEXT_PUBLIC_* envs).');
   }
 
-  // Context: encode ederek gönder (Cloudinary böyle saklıyor)
-  const context = `custom[name]=${encodeURIComponent(name)}|custom[message]=${encodeURIComponent(message)}`;
+  // ✅ JSON context (Türkçe karakterler bozulmaz)
+  const contextObj = { custom: { name, message } };
 
-  // Kullanıcıya özel klasör / tag (güvenli isim)
-  const safe = name.trim().length ? encodeURIComponent(name.trim()).replace(/%20/g, '_') : 'guest';
+  // Kullanıcıya özel, güvenli klasör & tag
+  const safe = name.trim()
+    ? encodeURIComponent(name.trim()).replace(/%20/g, '_')
+    : 'guest';
   const folder = `memories/${safe}`;
   const tags = safe;
 
-  // 1) Signature isteği (server tarafı aynı parametreleri imzalamalı)
+  // 1) İmza isteği (aynı değerleri gönderiyoruz!)
   const signRes = await fetch('/api/cloudinary-sign', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ upload_preset: uploadPreset, folder, context, tags }),
+    body: JSON.stringify({
+      upload_preset: uploadPreset,
+      folder,
+      context: contextObj,   // ← JSON gönder
+      tags
+    }),
   });
   if (!signRes.ok) throw new Error('Signature request failed');
   const { signature, timestamp } = await signRes.json();
 
-  // 2) Upload
+  // 2) Cloudinary'ye upload (context'i JSON.stringify ile ekliyoruz)
   const form = new FormData();
   form.append('file', file);
   form.append('api_key', apiKey);
   form.append('timestamp', String(timestamp));
   form.append('upload_preset', uploadPreset);
   form.append('signature', signature);
-  form.append('context', context);
+  form.append('context', JSON.stringify(contextObj)); // ← JSON string
   form.append('folder', folder);
   form.append('tags', tags);
 
@@ -54,18 +61,6 @@ export async function uploadToCloudinarySigned(
 
   if (!res.ok) throw new Error(data?.error?.message || 'Upload failed');
 
-  // DÖNERKEN decode et → UI direkt düzgün gösterir
-  if (data?.context?.custom) {
-    const dec = (v?: string) => {
-      try { return v ? decodeURIComponent(v) : v; } catch { return v; }
-    };
-    if (typeof data.context.custom.name === 'string') {
-      data.context.custom.name = dec(data.context.custom.name);
-    }
-    if (typeof data.context.custom.message === 'string') {
-      data.context.custom.message = dec(data.context.custom.message);
-    }
-  }
-
+  // UI'da direkt düzgün görünsün diye herhangi bir decode gerekmiyor.
   return data as CloudinaryUploadResult;
 }
