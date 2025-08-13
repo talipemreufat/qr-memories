@@ -2,6 +2,11 @@
 import { useState } from 'react';
 import { uploadToCloudinarySigned, type CloudinaryUploadResult } from '../lib/cloudinary';
 
+// Türkçe karakter decode helper
+const decodeSafe = (v?: string) => {
+  try { return v ? decodeURIComponent(v) : ''; } catch { return v || ''; }
+};
+
 export default function UploadPage() {
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
@@ -61,13 +66,13 @@ export default function UploadPage() {
                   <img src={r.secure_url} alt={`Uploaded ${idx}`} className="w-full" />
                 )}
 
-                {/* Cloudinary metadata (decode edilmiş halde geliyor) */}
+                {/* Cloudinary metadata (decode edilmiş halde) */}
                 <div className="px-3 py-2 text-sm text-gray-600">
                   {r.context?.custom?.name && (
-                    <p><span className="font-semibold">Ad:</span> {r.context.custom.name}</p>
+                    <p><span className="font-semibold">Ad:</span> {decodeSafe(r.context.custom.name)}</p>
                   )}
                   {r.context?.custom?.message && (
-                    <p><span className="font-semibold">Mesaj:</span> {r.context.custom.message}</p>
+                    <p><span className="font-semibold">Mesaj:</span> {decodeSafe(r.context.custom.message)}</p>
                   )}
                   {r.public_id && (
                     <p><span className="font-semibold">Klasör:</span> {r.public_id.split('/').slice(0, -1).join('/')}</p>

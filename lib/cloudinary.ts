@@ -20,7 +20,7 @@ export async function uploadToCloudinarySigned(
     throw new Error('Cloudinary config missing (check NEXT_PUBLIC_* envs).');
   }
 
-  // Context: encode ederek yolla (Cloudinary böyle saklıyor)
+  // Context: encode ederek gönder (Cloudinary böyle saklıyor)
   const context = `custom[name]=${encodeURIComponent(name)}|custom[message]=${encodeURIComponent(message)}`;
 
   // Kullanıcıya özel klasör / tag (güvenli isim)
@@ -28,7 +28,7 @@ export async function uploadToCloudinarySigned(
   const folder = `memories/${safe}`;
   const tags = safe;
 
-  // 1) İmza isteği (server: /api/cloudinary-sign aynı parametreleri imzalamalı)
+  // 1) Signature isteği (server tarafı aynı parametreleri imzalamalı)
   const signRes = await fetch('/api/cloudinary-sign', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -54,13 +54,16 @@ export async function uploadToCloudinarySigned(
 
   if (!res.ok) throw new Error(data?.error?.message || 'Upload failed');
 
-  // 🔑 DÖNERKEN decode et → UI tarafı direkt gösterir
+  // DÖNERKEN decode et → UI direkt düzgün gösterir
   if (data?.context?.custom) {
+    const dec = (v?: string) => {
+      try { return v ? decodeURIComponent(v) : v; } catch { return v; }
+    };
     if (typeof data.context.custom.name === 'string') {
-      try { data.context.custom.name = decodeURIComponent(data.context.custom.name); } catch {}
+      data.context.custom.name = dec(data.context.custom.name);
     }
     if (typeof data.context.custom.message === 'string') {
-      try { data.context.custom.message = decodeURIComponent(data.context.custom.message); } catch {}
+      data.context.custom.message = dec(data.context.custom.message);
     }
   }
 
